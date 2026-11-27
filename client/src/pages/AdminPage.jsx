@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MoviePoster from '../components/MoviePoster';
 import {
   ShieldCheck,
   Film,
@@ -561,7 +562,7 @@ const AdminPage = () => {
             {movies.map((m) => (
               <div key={m._id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-3">
-                  <img src={m.poster} alt={m.title} className="w-10 h-14 object-cover rounded shadow-sm" />
+                  <MoviePoster src={m.poster} alt={m.title} className="w-10 h-14 rounded shadow-sm flex-shrink-0" />
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">{m.title}</h4>
                     <p className="text-slate-400 text-[11px]">

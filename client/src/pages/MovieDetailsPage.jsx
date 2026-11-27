@@ -384,8 +384,12 @@ const MovieDetailsPage = () => {
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
             onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80';
+              if (movie.poster && e.target.src !== movie.poster && !e.target.src.endsWith(movie.poster)) {
+                e.target.src = movie.poster;
+              } else {
+                e.target.onerror = null;
+                e.target.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80';
+              }
             }}
             className="w-full h-full object-cover object-center opacity-30 transform scale-105"
           />

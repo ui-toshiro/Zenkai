@@ -154,8 +154,12 @@ const HomePage = () => {
               referrerPolicy="no-referrer"
               crossOrigin="anonymous"
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80';
+                if (heroMovie.poster && e.target.src !== heroMovie.poster && !e.target.src.endsWith(heroMovie.poster)) {
+                  e.target.src = heroMovie.poster;
+                } else {
+                  e.target.onerror = null;
+                  e.target.src = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80';
+                }
               }}
               className="w-full h-full object-cover object-center opacity-35 transform scale-105"
             />

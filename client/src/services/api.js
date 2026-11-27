@@ -35,14 +35,14 @@ const isCacheableUrl = (url) => {
 };
 
 // Versioned storage prefix to guarantee immediate invalidation of any legacy/corrupted cache
-const CACHE_PREFIX = 'zenkai_v4_cache_';
+const CACHE_PREFIX = 'zenkai_v5_cache_';
 
 // Automatically flush legacy caches on startup
 try {
   if (typeof window !== 'undefined' && window.sessionStorage) {
     for (let i = sessionStorage.length - 1; i >= 0; i--) {
       const k = sessionStorage.key(i);
-      if (k && (k.startsWith('zenkai_cache_') || k.startsWith('zenkai_v2_') || k.startsWith('zenkai_v3_'))) {
+      if (k && (k.startsWith('zenkai_cache_') || k.startsWith('zenkai_v2_') || k.startsWith('zenkai_v3_') || k.startsWith('zenkai_v4_'))) {
         sessionStorage.removeItem(k);
       }
     }

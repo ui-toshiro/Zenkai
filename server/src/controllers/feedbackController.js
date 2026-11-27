@@ -97,8 +97,9 @@ export const getAllFeedback = async (req, res, next) => {
     if (status && status !== 'All') {
       filter.status = status;
     }
-    if (search && search.trim()) {
-      const regex = new RegExp(search.trim(), 'i');
+    if (search && typeof search === 'string' && search.trim()) {
+      const escapedSearch = search.trim().replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      const regex = new RegExp(escapedSearch, 'i');
       filter.$or = [
         { suggestion: regex },
         { name: regex },

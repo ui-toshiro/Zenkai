@@ -1,16 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
-const getJwtSecret = () => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is not defined in production!');
-    }
-    return 'zenkai_secure_jwt_secret_token_key_992178';
-  }
-  return secret;
-};
+import { getJwtSecret } from '../utils/jwtSecret.js';
 
 export const protect = async (req, res, next) => {
   let token;

@@ -72,7 +72,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 app.use(morgan('dev'));
 
 // Global API rate limiting

@@ -1,16 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
-const getJwtSecret = () => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is not defined in production!');
-    }
-    return 'zenkai_secure_jwt_secret_token_key_992178';
-  }
-  return secret;
-};
+import { getJwtSecret } from '../utils/jwtSecret.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, getJwtSecret(), {
@@ -24,10 +14,17 @@ export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
+    if (
+      typeof name !== 'string' ||
+      typeof email !== 'string' ||
+      typeof password !== 'string' ||
+      !name.trim() ||
+      !email.trim() ||
+      !password
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, email and password',
+        message: 'Please provide valid name, email and password',
       });
     }
 
@@ -75,10 +72,10 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password',
+        message: 'Please provide valid email and password',
       });
     }
 

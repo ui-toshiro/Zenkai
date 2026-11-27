@@ -1040,13 +1040,42 @@ export const getMovieShowtimes = async (req, res, next) => {
 // @desc Universal image proxy for zero CORS/Referer issues
 // @route GET /api/v1/movies/proxy-image
 const proxyCache = new Map();
+const MAX_PROXY_BYTES = 5 * 1024 * 1024;
+
+const isSafeExternalUrl = (rawUrl) => {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (
+      host === 'localhost' ||
+      host === '0.0.0.0' ||
+      host === '::1' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal') ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^169\.254\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      /^(fc|fd|fe80)/i.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export const proxyImage = (req, res) => {
   const { url } = req.query;
   const fallback =
     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
 
-  if (!url) return res.redirect(fallback);
+  if (!url || typeof url !== 'string' || !isSafeExternalUrl(url)) {
+    return res.redirect(fallback);
+  }
 
   // Return cached buffer if exists
   if (proxyCache.has(url)) {
@@ -1057,7 +1086,7 @@ export const proxyImage = (req, res) => {
   }
 
   const fetchWithRedirects = (targetUrl, redirectsLeft = 3) => {
-    if (redirectsLeft <= 0) return res.redirect(fallback);
+    if (redirectsLeft <= 0 || !isSafeExternalUrl(targetUrl)) return res.redirect(fallback);
 
     try {
       const parsed = new URL(targetUrl);
@@ -1071,6 +1100,7 @@ export const proxyImage = (req, res) => {
               'User-Agent': 'ZENKAI-Media/2.0 (entertainment discovery platform; contact@zenkai.com)',
               Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             },
+            timeout: 8000,
           },
           (proxyRes) => {
             if (proxyRes.statusCode >= 300 && proxyRes.statusCode < 400 && proxyRes.headers.location) {
@@ -1082,15 +1112,28 @@ export const proxyImage = (req, res) => {
               return res.redirect(fallback);
             }
 
-            const contentType = proxyRes.headers['content-type'] || 'image/jpeg';
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+            const contentType = proxyRes.headers['content-type'] || '';
+            if (!contentType.toLowerCase().startsWith('image/')) {
+              proxyRes.destroy();
+              return res.redirect(fallback);
+            }
 
             const chunks = [];
-            proxyRes.on('data', (c) => chunks.push(c));
+            let totalBytes = 0;
+            proxyRes.on('data', (c) => {
+              totalBytes += c.length;
+              if (totalBytes > MAX_PROXY_BYTES) {
+                proxyRes.destroy();
+                return res.redirect(fallback);
+              }
+              chunks.push(c);
+            });
             proxyRes.on('end', () => {
+              if (res.headersSent) return;
               const buffer = Buffer.concat(chunks);
-              if (buffer.length > 0 && buffer.length < 5 * 1024 * 1024) {
+              res.setHeader('Content-Type', contentType);
+              res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+              if (buffer.length > 0) {
                 proxyCache.set(url, { contentType, buffer });
                 if (proxyCache.size > 200) {
                   const firstKey = proxyCache.keys().next().value;
@@ -1102,10 +1145,10 @@ export const proxyImage = (req, res) => {
           }
         )
         .on('error', () => {
-          res.redirect(fallback);
+          if (!res.headersSent) res.redirect(fallback);
         });
     } catch {
-      res.redirect(fallback);
+      if (!res.headersSent) res.redirect(fallback);
     }
   };
 

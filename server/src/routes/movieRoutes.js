@@ -33,7 +33,7 @@ router.get('/cities/validate', validateIndianCity);
 router.get('/tickets/cities', getTicketCities);
 router.get('/tickets/search', searchMoviesByCity);
 router.get('/proxy-image', proxyImage);
-router.post('/sync-media', syncMovies);
+router.post('/sync-media', protect, adminOnly, syncMovies);
 
 // Specific Movie endpoints
 router.get('/:idOrSlug/showtimes', getMovieShowtimes);

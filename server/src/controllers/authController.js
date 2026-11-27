@@ -1,8 +1,19 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is not defined in production!');
+    }
+    return 'zenkai_secure_jwt_secret_token_key_992178';
+  }
+  return secret;
+};
+
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'zenkai_secure_jwt_secret_token_key_992178', {
+  return jwt.sign({ id }, getJwtSecret(), {
     expiresIn: '30d',
   });
 };
@@ -28,9 +39,8 @@ export const register = async (req, res, next) => {
       });
     }
 
-    // First registered user gets admin rights for testing convenience
-    const userCount = await User.countDocuments();
-    const role = userCount === 0 ? 'admin' : 'user';
+    // All public registrations are securely assigned the standard 'user' role
+    const role = 'user';
 
     const user = await User.create({
       name,

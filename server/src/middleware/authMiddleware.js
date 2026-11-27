@@ -1,6 +1,17 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL SECURITY ERROR: JWT_SECRET environment variable is not defined in production!');
+    }
+    return 'zenkai_secure_jwt_secret_token_key_992178';
+  }
+  return secret;
+};
+
 export const protect = async (req, res, next) => {
   let token;
   if (
@@ -18,7 +29,7 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'zenkai_secure_jwt_secret_token_key_992178');
+    const decoded = jwt.verify(token, getJwtSecret());
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -52,7 +63,7 @@ export const optionalProtect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'zenkai_secure_jwt_secret_token_key_992178');
+    const decoded = jwt.verify(token, getJwtSecret());
     const user = await User.findById(decoded.id);
     if (user) {
       req.user = user;

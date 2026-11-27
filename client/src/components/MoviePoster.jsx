@@ -82,4 +82,4 @@ const MoviePoster = ({
   );
 };
 
-export default MoviePoster;
+export default React.memo(MoviePoster);

@@ -169,4 +169,4 @@ const MovieCard = ({ movie, selectedCity }) => {
   );
 };
 
-export default MovieCard;
+export default React.memo(MovieCard);

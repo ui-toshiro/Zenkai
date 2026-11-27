@@ -253,6 +253,12 @@ const MovieSchema = new mongoose.Schema(
   }
 );
 
+// Compound indexes for fast discovery, theatrical, and status queries
+MovieSchema.index({ releaseStatus: 1, releaseDate: 1 });
+MovieSchema.index({ releaseStatus: 1, popular: -1 });
+MovieSchema.index({ releaseStatus: 1, releaseYear: 1, releaseDate: 1 });
+MovieSchema.index({ featured: 1, trending: 1 });
+
 // Compound text search index for fast and accurate search across title, director, cast, and genres
 MovieSchema.index({
   title: 'text',

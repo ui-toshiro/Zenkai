@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -29,6 +30,9 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+// Enable gzip/deflate compression for API responses and static assets
+app.use(compression({ threshold: 1024 }));
 
 // Security and utility middlewares
 app.use(helmet({
@@ -78,8 +82,15 @@ app.use(morgan('dev'));
 // Global API rate limiting
 app.use('/api', apiGlobalLimiter);
 
-// Serve static images directly from public directory
-app.use('/images', express.static(path.join(__dirname, '../public/images')));
+// Serve static images directly from public directory with 7-day browser caching
+app.use(
+  '/images',
+  express.static(path.join(__dirname, '../public/images'), {
+    maxAge: '7d',
+    etag: true,
+    lastModified: true,
+  })
+);
 
 // Mount API Routes
 app.use('/api/v1/auth', authRoutes);
@@ -273,11 +284,28 @@ const clientDistPath = path.resolve(__dirname, '../../client/dist');
 
 // Serve frontend static build if client/dist exists
 if (fs.existsSync(clientDistPath)) {
-  app.use(express.static(clientDistPath));
+  app.use(
+    '/assets',
+    express.static(path.join(clientDistPath, 'assets'), {
+      maxAge: '1y',
+      immutable: true,
+    })
+  );
+  app.use(
+    express.static(clientDistPath, {
+      maxAge: '1d',
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      },
+    })
+  );
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/docs') || req.path === '/health') {
       return next();
     }
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(clientDistPath, 'index.html'));
   });
 } else {

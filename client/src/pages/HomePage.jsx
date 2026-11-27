@@ -151,6 +151,9 @@ const HomePage = () => {
             <img
               src={heroMovie.backdrop || heroMovie.poster}
               alt={heroMovie.title}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
               referrerPolicy="no-referrer"
               crossOrigin="anonymous"
               onError={(e) => {
